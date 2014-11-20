@@ -1,0 +1,6 @@
+module test;
+var a, b, c, temp;
+start
+    input a, b, c;
+    output a, output, c;
+end;

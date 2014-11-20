@@ -1,0 +1,11 @@
+module test;
+var a, b, c;
+start
+    input a;
+    output a;
+    input b;
+    do c=1 to b by a while (c >= 10)
+    do c=1 to b by a while (c >= 10)
+        input c;
+    end; end; end;
+end;

@@ -1,0 +1,32 @@
+{
+  "name": "ZitRoLang-compiller",
+  "version": "0.3.0",
+  "description": " Educational project. A translator (in future - compiler) for fictional programming language - ZitRoLang.",
+  "main": "translate.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "colors": "^1.0.3",
+    "execSync": "^1.0.2",
+    "shelljs": "^0.3.0",
+    "exec-sync": "^0.1.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "runTests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZitRos/edu-translator-ZitRoLanguage.git"
+  },
+  "keywords": [
+    "ZitRoLang",
+    "translator"
+  ],
+  "author": "ZitRo",
+  "bugs": {
+    "url": "https://github.com/ZitRos/edu-translator-ZitRoLanguage/issues"
+  },
+  "homepage": "https://github.com/ZitRos/edu-translator-ZitRoLanguage"
+}

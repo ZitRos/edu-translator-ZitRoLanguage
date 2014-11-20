@@ -1,0 +1,9 @@
+module 1;
+var a;
+begin
+
+
+    input a;
+
+
+end;
