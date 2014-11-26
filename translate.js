@@ -39,6 +39,8 @@ temp.forEach(function (a, b, c) {
 // change analyzing mechanism
 if (flags["-analyzeMethod"] == 2) {
     syntaxAnalyzer = new (require("./modules/SyntaxAnalyzer2"));
+} else if (flags["-analyzeMethod"] == 3) {
+    syntaxAnalyzer = new (require("./modules/SyntaxAnalyzer3"));
 }
 
 if (args.length < 1) {
