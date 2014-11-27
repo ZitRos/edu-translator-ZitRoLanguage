@@ -323,9 +323,10 @@ LexicalAnalyzer.prototype.logHTML = function (programCode, filename, translation
     fs.appendFileSync(filename,
             "<html><head><title>ZitRoLang output</title><style>html,body {background: rgb(245, 255, 242)} " +
             "table thead { font-weight: 900; } " +
-            "table td { text-align: center; }" +
-            "table {border-spacing: 0; border-collapse: collapse} table tr td {border: " +
-            "solid 1px black; padding: 0 5px 0 5px;} " +
+            "table td, table th { text-align: center; }" +
+            "table {border-spacing: 0; border-collapse: collapse} table tr td, table tr th {border: " +
+            "solid 1px black; padding: 0 5px 0 5px;} .noPadding * { padding: 1px !important; } " +
+            ".little {font-size: 75%;} " +
             ".source { white-space: pre; font-family: monospace; }</style></head><body>" +
             "<div style=\"overflow: hidden;\"><div style=\"float: left; margin-right: 20px;\"><h1>Lexical analyzer</h1><hr/>" +
             "<table>" +
