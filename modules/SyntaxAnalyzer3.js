@@ -1,26 +1,24 @@
 var SyntaxAnalyzer3 = function () {
 
     this.rules = {
-        "<program>": ["module", "$ID", ";", "var", "<idList1>", ";", "start", "<operatorList1>",
-            ";", "end", ";"],
+        "<program>": ["module", "$ID", ";", "var", "<idList1>", "start", "<operatorList1>", "end", ";"],
         "<operatorList1>": ["<operatorList>"],
         "<operatorList>": [
-            ["<operator1>"],
-            ["<operatorList>", ";", "<operator1>"]
+            ["<operator>"],
+            ["<operatorList>", ";", "<operator>"]
         ],
         "<idList1>": ["<idList>"],
         "<idList>": [
             ["$ID"],
             ["<idList>", ",", "$ID"]
         ],
-        "<operator1>": ["<operator>"],
         "<operator>": [
             ["input", "<idList1>"],
             ["output", "<idList1>"],
             ["$ID", "=", "<expression1>"],
             ["do", "$ID", "=", "<expression1>", "to", "<expression1>", "by", "<expression1>",
-                "while", "(", "<logicalExpression1>", ")", "<operatorList1>", ";", "end"],
-            ["if", "<logicalExpression1>", "then", "<operator1>"]
+                "while", "<logicalExpression1>", "<operatorList1>", "end"],
+            ["if", "<logicalExpression1>", "then", "<operator>"]
         ],
         "<expression1>": ["<expression>"],
         "<expression>": [
@@ -51,16 +49,20 @@ var SyntaxAnalyzer3 = function () {
         ],
         "<logicalTerminal1>": ["<logicalTerminal>"],
         "<logicalTerminal>": [
-            ["<logicalTerminal", "and", "<logicalMultiplier1>"],
+            ["<logicalTerminal>", "and", "<logicalMultiplier1>"],
             ["<logicalMultiplier1>"]
         ],
         "<logicalMultiplier1>": ["<logicalMultiplier>"],
         "<logicalMultiplier>": [
             ["[", "<logicalExpression1>", "]"],
-            ["<expression1>", "<logicalSign>", "<expression1>"],
+            ["<expression1>", "<=", "<expression1>"],
+            ["<expression1>", ">=", "<expression1>"],
+            ["<expression1>", "==", "<expression1>"],
+            ["<expression1>", "!=", "<expression1>"],
+            ["<expression1>", "<", "<expression1>"],
+            ["<expression1>", ">", "<expression1>"],
             ["not", "<logicalMultiplier1>"]
-        ],
-        "<logicalSign>": ["<", "<=", ">", ">=", "==", "!="]
+        ]
     };
 
 };
@@ -116,7 +118,9 @@ SyntaxAnalyzer3.prototype.check = function () {
                     for (i in obj) rec(obj[i]);
                 } else if (typeof obj[0] === "string") {
                     obj.map(function (element, index, obj) {
-                        if (isRule(element) && isNotRule(obj[index + 1])) {
+                        if (isRule(element) && isNotRule(obj[index + 1])
+                            || isRule(element) && isRule(obj[index + 1])
+                            || isNotRule(element) && isNotRule(obj[index + 1])) {
                             leftEqualities.push({ left: element, right: obj[index + 1] });
                             objectTable[element][obj[index + 1]] = "=";
                         }
@@ -135,7 +139,7 @@ SyntaxAnalyzer3.prototype.check = function () {
 
     (function findLastPlus() {
         var rec = function (obj, symbol) {
-            if (obj instanceof Array) { // obj instanceof array
+            if (obj instanceof Array) {
                 if (obj[0] instanceof Array) {
                     for (var i in obj) rec(obj[i], symbol);
                 } else if (typeof obj[0] === "string") {
@@ -148,21 +152,22 @@ SyntaxAnalyzer3.prototype.check = function () {
                         leftLastPluses[obj[obj.length - 1]] = symbol;
                     }
                 } else {
-                    console.error("Malformed code detected...");
+                    console.error("Malformed code detected. (4.1)");
                 }
             } else {
-                console.error("Malformed code detected.");
+                //console.error("Malformed code detected. (3.1)");
             }
         };
         for (var i in leftEqualities) {
             leftLastPluses = {};
             rec(_.rules[leftEqualities[i].left], leftEqualities[i].right);
             for (var j in leftLastPluses) {
-                //if (!objectTable[j][leftLastPluses[j]] || objectTable[j][leftLastPluses[j]] === ">") {
+                if (!objectTable[j][leftLastPluses[j]] || objectTable[j][leftLastPluses[j]] === ">") {
                     objectTable[j][leftLastPluses[j]] = ">";
-                //} else {
-                //    console.info("Possibly wrong algorithm.");
-                //}
+                } else {
+                    objectTable[j][leftLastPluses[j]] += " >";
+                    console.info("Conflict at: ", objectTable[j][leftLastPluses[j]], " --> ", ">", j, i);
+                }
             }
         }
     })();
@@ -176,18 +181,20 @@ SyntaxAnalyzer3.prototype.check = function () {
                     for (i in obj) rec(obj[i]);
                 } else if (typeof obj[0] === "string") {
                     obj.map(function (element, index, obj) {
-                        if (isRule(element) && isNotRule(obj[index - 1])) {
+                        if (isRule(element) && isNotRule(obj[index - 1])
+                            || isRule(element) && isRule(obj[index - 1])
+                            || isNotRule(element) && isNotRule(obj[index - 1])) {
                             rightEqualities.push({ left: obj[index - 1], right: element });
                             objectTable[obj[index - 1]][element] = "=";
                         }
                     });
                 } else {
-                    console.error("Malformed rule detected.");
+                    console.error("Malformed rule detected. (1)");
                 }
             } else if (typeof obj === "object") { // malformed rules protector
                 for (i in obj) rec(obj[i]);
             } else {
-                console.error("Malformed rule detected.");
+                console.error("Malformed rule detected. (2)");
             }
         };
         rec(_.rules);
@@ -208,17 +215,23 @@ SyntaxAnalyzer3.prototype.check = function () {
                         rightLastPluses[obj[0]] = symbol;
                     }
                 } else {
-                    console.error("Malformed code detected...");
+                    console.error("Malformed code detected. (4)");
                 }
             } else {
-                console.error("Malformed code detected.");
+                //console.error("Malformed code detected. (3)");
             }
         };
         for (var i in rightEqualities) {
             rightLastPluses = {};
             rec(rightEqualities[i].left, _.rules[rightEqualities[i].right]);
             for (var j in rightLastPluses) {
-                objectTable[j][rightLastPluses[j]] = "<";
+                //objectTable[rightLastPluses[j]][j] = "<";
+                if (!objectTable[rightLastPluses[j]][j] || objectTable[rightLastPluses[j]][j] === "<") {
+                    objectTable[rightLastPluses[j]][j] = "<";
+                } else {
+                    objectTable[rightLastPluses[j]][j] += " <";
+                    console.info("Conflict at: ", objectTable[rightLastPluses[j]][j], " --> ", ">", j, i);
+                }
             }
         }
     })();
@@ -265,7 +278,6 @@ SyntaxAnalyzer3.prototype.check = function () {
     htmlTable.push("</tbody></table></div>");
 
     return {
-        error: "Not implemented",
         html: htmlTable.join("")
     };
 
