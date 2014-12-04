@@ -36,7 +36,7 @@ var test = function (args) {
             + ");\t\t" + "Totally passed: " + passed + "/" + tests.length);
     }
     console.log("\n" + (tests.length === passed ?
-        "All tests has been passed.".green : "Some tests has been failed.".red));
+        "All tests have been passed.".green : "Some tests have been failed.".red));
 };
 
 console.log("Testing for analyze method 1...".blue);

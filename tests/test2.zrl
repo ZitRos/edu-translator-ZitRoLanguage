@@ -1,10 +1,11 @@
-module test;
-var a, b;
-start
-    input b;
-    input a;
-    a = 12 / (24 + b) - 1 + 2 ^ (1 + b);
-    if not [a > (1 / 2)] and a > (2 + 2 ^ (a / b)) then
-        output b;
-    output a;
-end;
+module test {
+    var a, b;
+    start
+        input b;
+        input a;
+        a = 12 / (24 + b) - 1 + 2 ^ (1 + b);
+        if not [a > (1 / 2)] and a > (2 + 2 ^ (a / b)) then
+            output b;
+        output a;
+    end
+}

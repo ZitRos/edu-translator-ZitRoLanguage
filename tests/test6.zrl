@@ -1,17 +1,18 @@
-module test;
-var a, b, c, temp;
-start
-    input a, b, c;
-    temp = b + c - (2 * a * b * c ^ 5) / (200 + c);
-    do a = (2 / 3) to temp by temp / 10 while (1 = 1)
-        output a;
-        b = a / 10 + c;
-        output b;
-
-        if [(a) < 4] and [a > (2 > 2)] then
+module test {
+    var a, b, c, temp;
+    start
+        input a, b, c;
+        temp = b + c - (2 * a * b * c ^ 5) / (200 + c);
+        do a = (2 / 3) to temp by temp / 10 while (1 = 1)
             output a;
-        output c;
+            b = a / 10 + c;
+            output b;
+
+            if [(a) < 4] and [a > (2 > 2)] then
+                output a;
+            output c;
 
 
-    end;
-end;
+        end;
+    end
+}

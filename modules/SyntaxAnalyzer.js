@@ -13,7 +13,7 @@ var SyntaxAnalyzer = function () {
             chain
                 .match("module")
                 .match({ code: CODE_ID })
-                .match(";")
+                .match("{")
                 .match("var")
                 .rule("identifierList")
                 .match(";")
@@ -21,7 +21,7 @@ var SyntaxAnalyzer = function () {
                 .rule("operatorList")
                 .match(";")
                 .match("end")
-                .match(";");
+                .match("}");
         },
 
         "identifierSubList": function (chain) {

@@ -1,9 +1,10 @@
-module 1;
-var a;
-begin
+module 1 {
+    var a;
+    begin
 
 
-    input a;
+        input a;
 
 
-end;
+    end
+}

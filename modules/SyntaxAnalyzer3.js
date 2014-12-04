@@ -1,7 +1,7 @@
 var SyntaxAnalyzer3 = function () {
 
     this.rules = {
-        "<program>": ["module", "$ID", ";", "var", "<idList1>", "start", "<operatorList1>", "end", ";"],
+        "<program>": ["module", "$ID", "{", "var", "<idList1>", "start", "<operatorList1>", "end", "}"],
         "<operatorList1>": ["<operatorList>"],
         "<operatorList>": [
             ["<operator>"],
@@ -9,7 +9,7 @@ var SyntaxAnalyzer3 = function () {
         ],
         "<idList1>": ["<idList>"],
         "<idList>": [
-            ["$ID"],
+            ["$ID"], // PARSE CONFLICT - add first symbol
             ["<idList>", ",", "$ID"]
         ],
         "<operator>": [
@@ -39,7 +39,7 @@ var SyntaxAnalyzer3 = function () {
         ],
         "<basicExpression>": [
             ["(", "<expression1>", ")"],
-            ["$ID"],
+            ["$ID"], // PARSE CONFLICT
             ["$CONST"]
         ],
         "<logicalExpression1>": ["<logicalExpression>"],
@@ -230,7 +230,7 @@ SyntaxAnalyzer3.prototype.check = function () {
                     objectTable[rightLastPluses[j]][j] = "<";
                 } else {
                     objectTable[rightLastPluses[j]][j] += " <";
-                    console.info("Conflict at: ", objectTable[rightLastPluses[j]][j], " --> ", ">", j, i);
+                    console.info("Conflict at: ", objectTable[rightLastPluses[j]][j], " --> ", "<", j, i);
                 }
             }
         }

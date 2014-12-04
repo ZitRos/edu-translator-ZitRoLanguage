@@ -25,7 +25,7 @@ var SyntaxAnalyzer2 = function () {
             return lex.code === CODE_ID ? "1-2.1" : error("Identifier expected");
         },
         "1-2.1": function (lex) {
-            return lex.lexeme === ";" ? "1-3" : error("Symbol \";\" expected");
+            return lex.lexeme === "{" ? "1-3" : error("Symbol \"{\" expected");
         },
         "1-3": function (lex) {
             return lex.lexeme === "var" ? "1-4" : error("Keyword \"var\" expected");
@@ -57,7 +57,7 @@ var SyntaxAnalyzer2 = function () {
             }
         },
         "1-8": function (lex) {
-            return lex.lexeme === ";" ? exit() : error("Symbol \";\" expected");
+            return lex.lexeme === "}" ? exit() : error("Symbol \"}\" expected");
         }, // program end
 
         "2-1": function (lex) { // operator: <operator>;

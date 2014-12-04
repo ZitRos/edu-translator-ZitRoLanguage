@@ -46,18 +46,20 @@ var LexicalAnalyzer = function () {
         "<=":       30,
         "==":       31,
         "!=":       32,
-        "^":        33
+        "^":        33,
 //      ID          34
 //      CONST       35
+        "{":        36,
+        "}":        37
     };
 
     this.class = {
         "letter": /[a-zA-Z]/,
         "digit": /[0-9]/,
-        "separator": /[;,\+\-\*\/\(\)\[\]\^]/,
+        "separator": /[;,\{}\+\-\*\/\(\)\[\]\^]/,
         "equality": /[=]/,
-        "lessThen": /[\<]/,
-        "greaterThen": /[\>]/,
+        "lessThen": /[<]/,
+        "greaterThen": /[>]/,
         "notEqual": /[!]/
     }
 
