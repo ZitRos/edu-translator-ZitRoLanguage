@@ -12,7 +12,7 @@ Run unit tests with <code>node runTests</code> command.
 
 ### Example
 Contents of <b>test.zrl</b> file:
-```pascal
+```javascript
 module test {
     var a, b, c;
     start
