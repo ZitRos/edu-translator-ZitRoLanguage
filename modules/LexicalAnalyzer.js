@@ -258,12 +258,12 @@ LexicalAnalyzer.prototype.parse = function (code) {
 
     table = this.getLexemesTable(code);
 
-    var inside = function (obj, val) {
+    var inside = function (obj, val, prop) {
 
         var u;
 
         for (u in obj) {
-            if (obj[u] === val) {
+            if (obj[u][prop] === val) {
                 return u;
             }
         }
@@ -277,10 +277,10 @@ LexicalAnalyzer.prototype.parse = function (code) {
         if (inVar && table[i].lexeme === "start") inVar = 0;
         if (table[i].lexeme === "var") inVar = 1;
 
-        if (table[i].code === 34) {
+        if (table[i].code === 34) { // ID
             //if (inVar) console.log(table[i]);
-            if ((n = inside(IDs, table[i].lexeme)) !== false) {
-                table[i].classCode = n;
+            if ((n = inside(IDs, table[i].lexeme, "name")) !== false) {
+                table[i].classCode = parseInt(n);
             } else {
                 if (!inVar && this.lexem[table[i-1].lexeme] !== 1) {
                     console.error("Variable \"" + table[i].lexeme + "\" (" + table[i].position.row +
@@ -296,15 +296,20 @@ LexicalAnalyzer.prototype.parse = function (code) {
                     };
                 }
                 if (this.lexem[table[i-1].lexeme] !== 1) {
-                    IDs[++ids] = table[i].lexeme;
+                    IDs[++ids] = {
+                        name: table[i].lexeme,
+                        value: 0
+                    };
                     table[i].classCode = ids;
                 }
             }
-        } else if (table[i].code === 35) {
-            if ((n = inside(CONSTs, table[i].lexeme)) !== false) {
-                table[i].classCode = n;
+        } else if (table[i].code === 35) { // CONST
+            if ((n = inside(CONSTs, table[i].lexeme, "value")) !== false) {
+                table[i].classCode = parseInt(n);
             } else {
-                CONSTs[++consts] = table[i].lexeme;
+                CONSTs[++consts] = {
+                    value: table[i].lexeme
+                };
                 table[i].classCode = consts;
             }
         }
@@ -365,7 +370,7 @@ LexicalAnalyzer.prototype.logHTML = function (programCode, filename, translation
 
     for (i in translation.IDs) {
         temp = translation.IDs[i];
-        fs.appendFileSync(filename, "<tr><td>" + i + "</td><td>" + escape(temp) + "</td></tr>");
+        fs.appendFileSync(filename, "<tr><td>" + i + "</td><td>" + escape(temp.name) + "</td></tr>");
     }
 
     fs.appendFileSync(filename, "</tbody></table>");
@@ -378,7 +383,7 @@ LexicalAnalyzer.prototype.logHTML = function (programCode, filename, translation
 
     for (i in translation.CONSTs) {
         temp = translation.CONSTs[i];
-        fs.appendFileSync(filename, "<tr><td>" + i + "</td><td>" + escape(temp) + "</td></tr>");
+        fs.appendFileSync(filename, "<tr><td>" + i + "</td><td>" + escape(temp.value) + "</td></tr>");
     }
 
     fs.appendFileSync(filename, "</tbody></table>" +

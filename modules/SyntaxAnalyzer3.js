@@ -1,11 +1,29 @@
 var SyntaxAnalyzer3 = function () {
 
+    var _ = this;
+
     this.LEX_CODES_SWAP = {
         34: "$ID",
         35: "$CONST"
     };
 
+    this.TRANSLATION = {};
     this.AXIOM = "<program>";
+    this.RPN = []; // reverse polish notation stack
+
+    /**
+     * Apply semantic program for array.
+     *
+     * @param {Array} ruleArray
+     * @param {function} callback
+     */
+    var semantic = function (ruleArray, callback) {
+
+        ruleArray.__SEMANTIC = callback;
+
+        return ruleArray;
+
+    };
 
     /**
      * @type {{rule: string[][]}}
@@ -31,7 +49,10 @@ var SyntaxAnalyzer3 = function () {
         "<operator>": [
             ["input", "<idList1>"],
             ["output", "<idList1>"],
-            ["$ID", "=", "<expression1>"],
+            semantic(["$ID", "=", "<expression1>"], function (stack) {
+                _.TRANSLATION.IDs[stack[0].classCode].value = parseFloat(_.RPN[_.RPN.length - 1]) || 0;
+                _.RPN = [];
+            }),
             ["do", "$ID", "=", "<expression1>", "to", "<expression1>", "by", "<expression1>",
                 "while", "<logicalExpression1>", "<operatorList1>", "end"],
             ["if", "<logicalExpression1>", "then", "<operator>"]
@@ -43,29 +64,29 @@ var SyntaxAnalyzer3 = function () {
             ["<expression1>"]
         ],
         "<expression>": [
-            ["<expression>", "+", "<terminal1>"],
-            ["<expression>", "-", "<terminal1>"],
+            semantic(["<expression>", "+", "<terminal1>"], function () { _.RPN.push("+"); }),
+            semantic(["<expression>", "-", "<terminal1>"], function () { _.RPN.push("-"); }),
             ["<terminal1>"]
         ],
         "<terminal1>": [
             ["<terminal>"]
         ],
         "<terminal>": [
-            ["<terminal>", "*", "<multiplier1>"],
-            ["<terminal>", "/", "<multiplier1>"],
+            semantic(["<terminal>", "*", "<multiplier1>"], function () { _.RPN.push("*"); }),
+            semantic(["<terminal>", "/", "<multiplier1>"], function () { _.RPN.push("/"); }),
             ["<multiplier1>"]
         ],
         "<multiplier1>": [
             ["<multiplier>"]
         ],
         "<multiplier>": [
-            ["<multiplier>", "^", "<basicExpression>"],
+            semantic(["<multiplier>", "^", "<basicExpression>"], function () { _.RPN.push("^"); }),
             ["<basicExpression>"]
         ],
         "<basicExpression>": [
             ["(", "<expression2>", ")"],
-            ["$ID"],
-            ["$CONST"]
+            semantic(["$ID"], function (stack) { _.RPN.push(_.TRANSLATION.IDs[stack[stack.length - 1].classCode].value); }),
+            semantic(["$CONST"], function (stack) { _.RPN.push(_.TRANSLATION.CONSTs[stack[stack.length - 1].classCode].value); })
         ],
         "<logicalExpression1>": [
             ["<logicalExpression>"]
@@ -98,7 +119,7 @@ var SyntaxAnalyzer3 = function () {
 
 };
 
-SyntaxAnalyzer3.prototype.check = function (translation) {
+SyntaxAnalyzer3.prototype.check = function (TRANSLATION) {
 
     var _ = this,
         objectTable = {},
@@ -110,9 +131,17 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
         //rightEqualities = [],
         //rightLastPluses = {};
 
+    this.TRANSLATION = TRANSLATION;
+
     var isRule = function (s) { return s ? !!s.match(/^<\w+>$/) : false; };
-        //isNotRule = function (s) { return s ? !isRule(s) : false },
-        //isClass = function (s) { return s ? !!s.match(/^\$\w+$/) : false; };
+
+    var clone = function (o) {
+        var no = {};
+        for (var i in o) {
+            no[i] = o[i];
+        }
+        return no;
+    };
 
     var setExpression = function (leftLex, rightLex, expression) {
 
@@ -200,6 +229,9 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
                 }
                 for (var j in obj[i]) { // obj[i] instanceof Array
                     for (var k in obj[i][j]) { // obj[i][j] instanceof Array
+                        if (k.substr(0, 2) === "__") {
+                            continue;
+                        }
                         if (!everything.hasOwnProperty(obj[i][j][k])) {
                             everything[obj[i][j][k]] = true;
                         }
@@ -242,131 +274,6 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
         }
     })();
 
-    //(function findLeftEqualities() {
-    //    var i, rec = function (obj) {
-    //        if (obj instanceof Array) {
-    //            if (obj[0] instanceof Array) {
-    //                for (i in obj) rec(obj[i]);
-    //            } else if (typeof obj[0] === "string") {
-    //                obj.map(function (element, index, obj) {
-    //                    if (isRule(element) && isNotRule(obj[index + 1])
-    //                        || isRule(element) && isRule(obj[index + 1])
-    //                        || isNotRule(element) && isNotRule(obj[index + 1])) {
-    //                        leftEqualities.push({ left: element, right: obj[index + 1] });
-    //                        objectTable[element][obj[index + 1]] = "=";
-    //                    }
-    //                });
-    //            } else {
-    //                console.error("Malformed rule detected.");
-    //            }
-    //        } else if (typeof obj === "object") { // malformed rules protector
-    //            for (i in obj) rec(obj[i]);
-    //        } else {
-    //            console.error("Malformed rule detected.");
-    //        }
-    //    };
-    //    rec(_.rules);
-    //})();
-    //
-    //(function findLastPlus() {
-    //    var rec = function (obj, symbol) {
-    //        if (obj instanceof Array) {
-    //            if (obj[0] instanceof Array) {
-    //                for (var i in obj) rec(obj[i], symbol);
-    //            } else if (typeof obj[0] === "string") {
-    //                if (isRule(obj[obj.length - 1])) {
-    //                    if (!leftLastPluses.hasOwnProperty(/*_.rules[*/obj[obj.length - 1]/*]*/)) { // limit
-    //                        leftLastPluses[obj[obj.length - 1]] = symbol;
-    //                        rec(_.rules[obj[obj.length - 1]], symbol);
-    //                    }
-    //                } else {
-    //                    leftLastPluses[obj[obj.length - 1]] = symbol;
-    //                }
-    //            } else {
-    //                console.error("Malformed code detected. (4.1)");
-    //            }
-    //        } else {
-    //            //console.error("Malformed code detected. (3.1)");
-    //        }
-    //    };
-    //    for (var i in leftEqualities) {
-    //        leftLastPluses = {};
-    //        rec(_.rules[leftEqualities[i].left], leftEqualities[i].right);
-    //        for (var j in leftLastPluses) {
-    //            if (!objectTable[j][leftLastPluses[j]] || objectTable[j][leftLastPluses[j]] === ">") {
-    //                objectTable[j][leftLastPluses[j]] = ">";
-    //            } else {
-    //                objectTable[j][leftLastPluses[j]] += " >";
-    //                console.info("Conflict at: ", objectTable[j][leftLastPluses[j]], " --> ", ">", j, i);
-    //            }
-    //        }
-    //    }
-    //})();
-    //
-    //// duplicate because I want to sleep
-    //
-    //(function findRightEqualities() {
-    //    var i, rec = function (obj) {
-    //        if (obj instanceof Array) {
-    //            if (obj[0] instanceof Array) {
-    //                for (i in obj) rec(obj[i]);
-    //            } else if (typeof obj[0] === "string") {
-    //                obj.map(function (element, index, obj) {
-    //                    if (isRule(element) && isNotRule(obj[index - 1])
-    //                        || isRule(element) && isRule(obj[index - 1])
-    //                        || isNotRule(element) && isNotRule(obj[index - 1])) {
-    //                        rightEqualities.push({ left: obj[index - 1], right: element });
-    //                        objectTable[obj[index - 1]][element] = "=";
-    //                    }
-    //                });
-    //            } else {
-    //                console.error("Malformed rule detected. (1)");
-    //            }
-    //        } else if (typeof obj === "object") { // malformed rules protector
-    //            for (i in obj) rec(obj[i]);
-    //        } else {
-    //            console.error("Malformed rule detected. (2)");
-    //        }
-    //    };
-    //    rec(_.rules);
-    //})();
-    //
-    //(function findFirstPlus() {
-    //    var rec = function (symbol, obj) {
-    //        if (obj instanceof Array) { // obj instanceof array
-    //            if (obj[0] instanceof Array) {
-    //                for (var i in obj) rec(symbol, obj[i]);
-    //            } else if (typeof obj[0] === "string") {
-    //                if (isRule(obj[0])) {
-    //                    if (!rightLastPluses.hasOwnProperty(obj[0])) { // limit
-    //                        rightLastPluses[obj[0]] = symbol;
-    //                        rec(symbol, _.rules[obj[0]]);
-    //                    }
-    //                } else {
-    //                    rightLastPluses[obj[0]] = symbol;
-    //                }
-    //            } else {
-    //                console.error("Malformed code detected. (4)");
-    //            }
-    //        } else {
-    //            //console.error("Malformed code detected. (3)");
-    //        }
-    //    };
-    //    for (var i in rightEqualities) {
-    //        rightLastPluses = {};
-    //        rec(rightEqualities[i].left, _.rules[rightEqualities[i].right]);
-    //        for (var j in rightLastPluses) {
-    //            //objectTable[rightLastPluses[j]][j] = "<";
-    //            if (!objectTable[rightLastPluses[j]][j] || objectTable[rightLastPluses[j]][j] === "<") {
-    //                objectTable[rightLastPluses[j]][j] = "<";
-    //            } else {
-    //                objectTable[rightLastPluses[j]][j] += " <";
-    //                console.info("Conflict at: ", objectTable[rightLastPluses[j]][j], " --> ", "<", j, i);
-    //            }
-    //        }
-    //    }
-    //})();
-
     var normalizeName = function (name) {
         var r = function (s) { return s.replace(/</g, "&lt;");};
         if (name.match(/^[<>=]$/)) {
@@ -399,7 +306,7 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
     // expressions set here, using objectTable variable.
 
     //noinspection JSCheckFunctionSignatures
-    var lexemes = translation.lexemes.slice().concat({ lexeme: END_SYMBOL, code: -1, position: {row: -1, column: -1} }),
+    var lexemes = TRANSLATION.lexemes.slice().concat({ lexeme: END_SYMBOL, code: -1, position: {row: -1, column: -1} }),
         lexeme = null,
         stackTop,
         relation,
@@ -432,7 +339,7 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
         for (var i in _.rules) {
             for (var j in _.rules[i]) {
                 if (arraysEqual(_.rules[i][j], stackPart.map(function (el) { return el.lexeme; }))) {
-                    return i;
+                    return { rule: i, semantic: _.rules[i][j].__SEMANTIC || null };
                 }
             }
         }
@@ -447,24 +354,17 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
     };
 
     var normalizeLexeme = function (lexeme) {
-        var lex, o;
+        var newLex = clone(lexeme);
         if (!lexeme.lexeme) { console.log("Unknown lexeme cannot be normalized:", lexeme); }
         if (_.LEX_CODES_SWAP.hasOwnProperty(lexeme.code)) {
-            lex = _.LEX_CODES_SWAP[lexeme.code];
-        } else {
-            lex = lexeme.lexeme;
+            newLex.lexeme = _.LEX_CODES_SWAP[lexeme.code];
+            newLex.originLexeme = lexeme.lexeme;
         }
-        o = {
-            lexeme: lex,
-            code: lexeme.code,
-            position: lexeme.position
-        };
-        if (lex !== lexeme.lexeme) { o.originLexeme = lexeme.lexeme; }
-        return o;
+        return newLex;
     };
 
     htmlTable.push("<h1>Syntax parse log</h1><div style=\"overflow: auto;\"><table style=\"white-space: nowrap;\">" +
-    "<thead><tr><th>Step</th><th>Stack</th><th>Relation</th><th>Chain</th></tr></thead><tbody>");
+    "<thead><tr><th>Step</th><th>Stack</th><th>Relation</th><th>RPN</th><th>Chain</th></tr></thead><tbody>");
 
     while (lexemes.length > 0) {
         if (this.LEX_CODES_SWAP.hasOwnProperty(lexemes[0].code)) {
@@ -477,13 +377,14 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
         //console.error(lexeme, "|||", stackTop, "|||", relation, "\n\n");
         htmlTable.push("<tr><td>", iterations ,"</td><td style=\"text-align: right\">",
             normalizeName(stack.map(function (el) { return el.lexeme; }).join(" ")), "</td><td>",
-            normalizeName(relation), "</td><td style=\"text-align: left;\">",
+            normalizeName(relation), "</td><td>",
+            normalizeName(_.RPN.join(" ")) + "</td><td style=\"text-align: left;\">",
             normalizeName(lexemes.map(function (el) { return el.lexeme; }).join(" ")) ,"</td></tr>");
         if (lexemes.length < 2 && stackTop.lexeme === this.AXIOM) {
             htmlTable.push("<tr><td>", ++iterations ,"</td><td style=\"text-align: right; color: green;\">",
                 "Code", "</td><td style=\"color: green;\">",
                 "is", "</td><td style=\"text-align: left; color: green;\">",
-                "clean!" ,"</td></tr>");
+                "clean!" ,"</td><td></td></tr>");
             break;
         }
         if (relation === "<") {
@@ -500,19 +401,23 @@ SyntaxAnalyzer3.prototype.check = function (translation) {
             })();
             stackPart = stack.splice(stack.length - len, len);
             rule = getRuleFromStackPart(stackPart);
+            if (typeof rule.semantic === "function") { rule.semantic.call(_, stackPart); }
             if (!rule) {
-                console.error("Rule for", stackPart, "not found. Base len:", len);
+                console.error("Rule for", stackPart, "not found on (%d, %d)",
+                    stackPart[stackPart.length - 1].position.row,
+                    stackPart[stackPart.length - 1].position.column);
                 htmlTable.push("<tr><td class=\"errorLeft\" colspan='4'>Rule with the right part [",
                     stackPart.map(function (el) { return "\"<i>" + normalizeName(el.lexeme) + "</i>\""; }).join(", "),
                     "] is not set (" + stackPart[stackPart.length - 1].position.row + ", " + stackPart[stackPart.length - 1].position.column + ")</td></tr>");
                 return new nullObj();
             }
-            stack.push({ lexeme: rule, code: -1, position: stackPart[stackPart.length - 1].position });
+            stack.push({ lexeme: rule.rule, code: -1, position: stackPart[stackPart.length - 1].position });
         } else if (relation === "=") {
             tempLexeme = lexemes.splice(0, 1)[0];
             stack.push(normalizeLexeme(tempLexeme));
         } else {
-            console.error("Parse error: unknown relation %s <-\"%s\"-> %s.", stackTop.lexeme, relation, lexeme);
+            console.error("Parse error: unknown relation \"%s\" <-%s-> \"%s\" (%d, %d)", stackTop.lexeme, relation,
+                lexeme, stackTop.position.row, stackTop.position.column);
             htmlTable.push("<tr><td class=\"errorLeft\" colspan='4'>Unknown relation \"", stackTop.lexeme,
                 "\" <-", normalizeName(relation), "-> \"", lexeme,
                 "\" (" + stackTop.position.row + ", " + stackTop.position.column + ")</td></tr>");
