@@ -28,7 +28,10 @@ var SyntaxAnalyzer2 = function () {
             return lex.lexeme === "{" ? "1-3" : error("Symbol \"{\" expected");
         },
         "1-3": function (lex) {
-            return lex.lexeme === "var" ? "1-4" : error("Keyword \"var\" expected");
+            return lex.lexeme === "var" ? "1-3.1" : error("Keyword \"var\" expected");
+        },
+        "1-3.1": function (lex) { // v2
+            return lex.lexeme === ":" ? "1-4" : error("Symbol \":\" expected");
         },
         "1-4": function (lex) {
             return lex.code === 34 ? "1-5" : error("Identifier expected");
@@ -36,8 +39,9 @@ var SyntaxAnalyzer2 = function () {
         "1-5": function (lex) {
             switch (lex.lexeme) {
                 case ",": return "1-4"; break;
-                case ";": return "1-6"; break;
-                default: return error("Symbol \",\" or \";\" expected");
+                //case ";": return "1-6"; break;
+                //default: return error("Symbol \",\" or \";\" expected"); // v2
+                default: return nullSymb("1-6");
             }
         },
         "1-6": function (lex) {
@@ -62,7 +66,7 @@ var SyntaxAnalyzer2 = function () {
 
         "2-1": function (lex) { // operator: <operator>;
             if (lex.lexeme === "input" || lex.lexeme === "output") {
-                return "2-2";
+                return "2-2.1";
             } else if (lex.code === CODE_ID) {
                 return "2-4";
             } else if (lex.lexeme === "do") {
@@ -75,17 +79,21 @@ var SyntaxAnalyzer2 = function () {
                 return error("Operator expected");
             }
         },
+        "2-2.1": function (lex) {
+            return lex.lexeme === ":" ? "2-2" : error("Symbol \":\" expected");
+        },
         "2-2": function (lex) {
             return lex.code === CODE_ID ? "2-3" : error("Identifier expected");
         },
         "2-3": function (lex) {
             if (lex.lexeme === ",") { // list of id's
                 return "2-2";
-            } else if (lex.lexeme === ";") {
+            } else if (lex.lexeme === ";") { // v2
                 // return nullSymb("2-fin");
                 return exit();
             } else {
-                return error("Symbol \",\" or \";\" expected.");
+                //return error("Symbol \",\" or \";\" expected.");
+                return exitNullS();
             }
         },
         "2-4": function (lex) { // a = b
@@ -138,45 +146,53 @@ var SyntaxAnalyzer2 = function () {
 //            return nullSymb("3-1");
 //        },
         "2-13": function (lex) {
-            return lex.lexeme === "while" ? "2-14" : error("Keyword \"while\" expected");
-        },
-        "2-14": function (lex) {
-            //return lex.lexeme === "(" ? "2-15" : error("Symbol \"(\" expected");
-            if (lex.lexeme === "(") {
-                stack.push("2-16");
+            // return lex.lexeme === "while" ? "2-14" : error("Keyword \"while\" expected"); // v2
+            if (lex.lexeme === "while") {
+                stack.push("2-18");
                 return "4-2";
             } else {
-                return error("Symbol \"(\" expected");
+                return error("Keyword \"while\" expected");
             }
         },
+        //"2-14": function (lex) { // v2
+        //    //return lex.lexeme === "(" ? "2-15" : error("Symbol \"(\" expected");
+        //    if (lex.lexeme === "(") {
+        //        stack.push("2-16");
+        //        return "4-2";
+        //    } else {
+        //        return error("Symbol \"(\" expected");
+        //    }
+        //},
 //        "2-15": function () {
 //            stack.push("2-16");
 //            return nullSymb("4-1");
 //        },
-        "2-16": function (lex) {
-            //return lex.lexeme === ")" ? "2-17" : error("Symbol \")\" expected");
-            if (lex.lexeme === ")") {
-                stack.push("2-18");
-                return "2-1";
-            } else {
-                return error("Symbol \")\" expected");
-            }
-        },
+        //"2-16": function (lex) { // v2
+        //    //return lex.lexeme === ")" ? "2-17" : error("Symbol \")\" expected");
+        //    if (lex.lexeme === ")") {
+        //        stack.push("2-18");
+        //        return "2-1";
+        //    } else {
+        //        return error("Symbol \")\" expected");
+        //    }
+        //},
 //        "2-17": function () {
 //            stack.push("2-18");
 //            return nullSymb("2-1");
 //        },
         "2-18": function (lex) {
             if (lex.lexeme === "end") {
-                return "2-18.1";
+                //return "2-18.1"; // v2
+                //return exit();
+                return "2-fin";
             } else {
                 stack.push("2-18");
                 return nullSymb("2-1");
             }
         },
-        "2-18.1": function (lex) {
-            return lex.lexeme === ";" ? exit() : error("Symbol \";\" expected");
-        },
+        //"2-18.1": function (lex) { // v2
+        //    return lex.lexeme === ";" ? exit() : error("Symbol \";\" expected");
+        //},
 //        "2-19": function () { // if
 //            stack.push("2-20");
 //            return nullSymb("4-2");
@@ -193,7 +209,12 @@ var SyntaxAnalyzer2 = function () {
 //            return nullSymb("2-1");
 //        },
         "2-fin": function (lex) {
-            return lex.lexeme === ";" ? exit() : error("Symbol \";\" expected");
+            //return lex.lexeme === ";" ? exit() : error("Symbol \";\" expected"); // v2
+            if (lex.lexeme === ";") {
+                return exit();
+            } else {
+                return exitNullS();
+            }
         },
 
         "3-1": function (lex) { // expression

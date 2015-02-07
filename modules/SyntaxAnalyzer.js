@@ -16,10 +16,10 @@ var SyntaxAnalyzer = function () {
                 .match("{")
                 .match("var")
                 .rule("identifierList")
-                .match(";")
+                //.match(";") // v3
                 .match("start")
                 .rule("operatorList")
-                .match(";")
+                //.match(";") // v3
                 .match("end")
                 .match("}");
         },
@@ -31,6 +31,7 @@ var SyntaxAnalyzer = function () {
         },
         "identifierList": function (chain) {
             chain
+                .match(":") // v3
                 .match({ code: CODE_ID })
                 .repeatRule("identifierSubList", 0);
         },
@@ -79,11 +80,11 @@ var SyntaxAnalyzer = function () {
                 .match("by")
                 .rule("expression")
                 .match("while")
-                .match("(")
+                //.match("(") // v3
                 .rule("logicalExpression")
-                .match(")")
+                //.match(")") // v3
                 .rule("operatorList")
-                .match(";")
+                //.match(";") // v3
                 .match("end")
         },
         "conditionOperator": function (chain) {

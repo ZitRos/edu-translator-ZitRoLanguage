@@ -50,13 +50,14 @@ var LexicalAnalyzer = function () {
 //      ID          34
 //      CONST       35
         "{":        36,
-        "}":        37
+        "}":        37,
+        ":":        38
     };
 
     this.class = {
         "letter": /[a-zA-Z]/,
         "digit": /[0-9]/,
-        "separator": /[;,\{}\+\-\*\/\(\)\[\]\^]/,
+        "separator": /[;,\{}\+\-\*\/\(\)\[\]\^:]/,
         "equality": /[=]/,
         "lessThen": /[<]/,
         "greaterThen": /[>]/,
@@ -126,7 +127,7 @@ LexicalAnalyzer.prototype._nextState = function (state, sClass) {
             "": function (lexeme) { return { lexeme: lexeme, code: 35 } }
         },
         4: { // <=
-            "equality": function (lexeme) {
+            "equality": function () {
                 return { lexeme: "<=", code: _this.lexem["<="] };
             },
             "": function (lexeme) {
@@ -134,7 +135,7 @@ LexicalAnalyzer.prototype._nextState = function (state, sClass) {
             }
         },
         5: { // >=
-            "equality": function (lexeme) {
+            "equality": function () {
                 return { lexeme: ">=", code: _this.lexem[">="] };
             },
             "": function (lexeme) {
@@ -142,7 +143,7 @@ LexicalAnalyzer.prototype._nextState = function (state, sClass) {
             }
         },
         6: { // ==
-            "equality": function (lexeme) {
+            "equality": function () {
                 return { lexeme: "==", code: _this.lexem["=="] };
             },
             "": function (lexeme) {
@@ -150,10 +151,10 @@ LexicalAnalyzer.prototype._nextState = function (state, sClass) {
             }
         },
         7: { // !=
-            "equality": function (lexeme) {
+            "equality": function () {
                 return { lexeme: "!=", code: _this.lexem["!="] };
             },
-            "": function (lexeme) {
+            "": function () {
                 return { error: 1 };
             }
         }
@@ -177,8 +178,7 @@ LexicalAnalyzer.prototype.getLexemesTable = function (string) {
     var i, sClass, state, stack, nextState, res, temp,
         row = 1, column = 1,
         table = [],
-        goose = false,
-        _this = this;
+        goose = false;
 
     string += " ";
 
@@ -274,10 +274,11 @@ LexicalAnalyzer.prototype.parse = function (code) {
 
     for (i in table) {
 
-        if (inVar && table[i].lexeme === ";") inVar = 0;
+        if (inVar && table[i].lexeme === "start") inVar = 0;
         if (table[i].lexeme === "var") inVar = 1;
 
         if (table[i].code === 34) {
+            //if (inVar) console.log(table[i]);
             if ((n = inside(IDs, table[i].lexeme)) !== false) {
                 table[i].classCode = n;
             } else {
@@ -329,6 +330,7 @@ LexicalAnalyzer.prototype.logHTML = function (programCode, filename, translation
             "table {border-spacing: 0; border-collapse: collapse} table tr td, table tr th {border: " +
             "solid 1px black; padding: 0 5px 0 5px;} .noPadding * { padding: 1px !important; } " +
             ".little {font-size: 75%;} " +
+            ".errorLeft {text-align: left; color: red; padding-left: 200px;} " +
             ".source { white-space: pre; font-family: monospace; }</style></head><body>" +
             "<div style=\"overflow: hidden;\"><div style=\"float: left; margin-right: 20px;\"><h1>Lexical analyzer</h1><hr/>" +
             "<table>" +

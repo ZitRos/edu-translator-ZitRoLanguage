@@ -14,18 +14,18 @@ Run unit tests with <code>node runTests</code> command.
 Contents of <b>test.zrl</b> file:
 ```javascript
 module test {
-    var a, b, c;
+    var: a, b, c
     start
         b = 3;
         a = 2;
         c = 1;
         if [[a != (b + 10)] or not [b == 1] or [a <= 2]] or [not 1 >= 1] then
-        do c=1 to b by a while (c >= 10)
-            do c=1 to b by a while (c >= 10)
-                output c;
-            end;
+        do c=1 to b by a while [c >= 10] or [a < 5]
+            do c=1 to b by a while c >= 10
+                output: c
+            end
         end;
-        output a;
+        output: a
     end
 }
 ```

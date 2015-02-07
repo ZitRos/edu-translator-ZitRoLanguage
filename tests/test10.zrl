@@ -1,9 +1,9 @@
 module test {
-    var a, b;
+    var: a, b
     start
-        input b;
+        input: b;
         a = (((b + 5 * 2)));
-        if [a != (b + 10)] or [1 == 1] then output b;
-        output a;
+        if [a != (b + 10)] or [1 == 1] then output: b;
+        output: a
     end
 }

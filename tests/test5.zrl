@@ -1,9 +1,9 @@
 module 1 {
-    var a;
-    begin
+    var: a
+    start
 
 
-        input a;
+        input: a
 
 
     end

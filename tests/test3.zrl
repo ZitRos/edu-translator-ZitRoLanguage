@@ -1,8 +1,8 @@
 module c {
-    var b;
+    var: b
     start
-        do c=1 to 2 by 1 while (1 = 1)
-            output c;
-        end;
+        do c=1 to 2 by 1 while 1 == 1
+            output c
+        end
     end
 }

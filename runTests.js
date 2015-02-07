@@ -1,12 +1,14 @@
-var exec = require("shelljs").exec,
-    colors = require("colors");
+var fs = require("fs"),
+    exec = require("shelljs").exec;
+
+require("colors");
 
 var tests = [
         { file: "test1.zrl", code: 0 },
         { file: "test2.zrl", code: 0 },
         { file: "test3.zrl", code: 1 },
         { file: "test4.zrl", code: 0 },
-        { file: "test5.zrl", code: 1 },
+        { file: "test5.zrl", code: 2 },
         { file: "test6.zrl", code: 2 },
         { file: "test7.zrl", code: 2 },
         { file: "test8.zrl", code: 2 },
@@ -15,12 +17,18 @@ var tests = [
         { file: "test11.zrl", code: 0 }
     ],
     passed = 0,
+    hasFails = false,
     result, i, a,
     logFlag = false;
 
 process.argv.slice(2).every(function (el) {
     if (el === "--log") logFlag = true;
 });
+
+if (!fs.existsSync("tested")) {
+    console.log("Creating directory \"tested\".");
+    fs.mkdirSync("tested");
+}
 
 var test = function (args) {
     passed = 0;
@@ -30,6 +38,7 @@ var test = function (args) {
                 + (args ? " " + args : ""),
             {silent: true});
         if (a = (result.code === tests[i].code)) passed++;
+        if (!a) hasFails = true;
         if (!a || logFlag) console.log("\n---------------------- ".red + tests[i].file + "\n"
             + result.output + "\n----------------------\n".red);
         console.log((a ? "PASSED".green : "FAILED".red) + " #" + (i + 1) + " (" + tests[i].file
@@ -45,3 +54,11 @@ test();
 console.log("\nTesting for analyze method 2...".blue);
 test("-analyzeMethod 2");
 
+console.log("\nTesting for analyze method 3...".blue);
+test("-analyzeMethod 3");
+
+if (hasFails) {
+    console.error("\nSome tests are not passing.");
+} else {
+    console.log("\nAll test have been successfully passed.".blue);
+}
