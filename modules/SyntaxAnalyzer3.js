@@ -50,7 +50,7 @@ var SyntaxAnalyzer3 = function () {
             ["input", "<idList1>"],
             ["output", "<idList1>"],
             semantic(["$ID", "=", "<expression1>"], function (stack) {
-                _.TRANSLATION.IDs[stack[0].classCode].value = parseFloat(_.RPN[_.RPN.length - 1]) || 0;
+                _.TRANSLATION.IDs[stack[0].classCode].value = parseFloat(processRPN(_.RPN)) || 0;
                 _.RPN = [];
             }),
             ["do", "$ID", "=", "<expression1>", "to", "<expression1>", "by", "<expression1>",
@@ -116,6 +116,48 @@ var SyntaxAnalyzer3 = function () {
             ["not", "<logicalMultiplier1>"]
         ]
     };
+
+};
+
+/**
+ * @param {Array} rpn
+ */
+var processRPN = function (rpn) {
+
+    rpn = rpn.slice();
+
+    if (rpn.length === 0) return null;
+
+    for (var i = 0; i < rpn.length; i++) {
+        var el = rpn[i], res;
+        if (el === "+") {
+            res = parseFloat(rpn[i - 2]) + parseFloat(rpn[i - 1]);
+            rpn.splice(i - 2, 3, res);
+            i -= 2;
+        } else if (el === "-") {
+            res = parseFloat(rpn[i - 2]) - parseFloat(rpn[i - 1]);
+            rpn.splice(i - 2, 3, res);
+            i -= 2;
+        } else if (el === "*") {
+            res = parseFloat(rpn[i - 2]) * parseFloat(rpn[i - 1]);
+            rpn.splice(i - 2, 3, res);
+            i -= 2;
+        } else if (el === "/") {
+            res = parseFloat(rpn[i - 2]) / parseFloat(rpn[i - 1]);
+            rpn.splice(i - 2, 3, res);
+            i -= 2;
+        } else if (el === "^") {
+            res = Math.pow(parseFloat(rpn[i - 2]), parseFloat(rpn[i - 1]));
+            rpn.splice(i - 2, 3, res);
+            i -= 2;
+        } else if (isFinite(el)) {
+
+        } else {
+            console.error("Unable to process rpn: " + rpn.join(" "));
+        }
+    }
+
+    return rpn.length === 1 ? rpn[0] : null;
 
 };
 
@@ -374,11 +416,12 @@ SyntaxAnalyzer3.prototype.check = function (TRANSLATION) {
         }
         stackTop = stack[stack.length - 1];
         relation = objectTable[stackTop.lexeme][lexeme];
+        var rpnPr = processRPN(_.RPN);
         //console.error(lexeme, "|||", stackTop, "|||", relation, "\n\n");
         htmlTable.push("<tr><td>", iterations ,"</td><td style=\"text-align: right\">",
             normalizeName(stack.map(function (el) { return el.lexeme; }).join(" ")), "</td><td>",
             normalizeName(relation), "</td><td>",
-            normalizeName(_.RPN.join(" ")) + "</td><td style=\"text-align: left;\">",
+            normalizeName(_.RPN.join(" ")) + (rpnPr ? " = " + rpnPr : "") + "</td><td style=\"text-align: left;\">",
             normalizeName(lexemes.map(function (el) { return el.lexeme; }).join(" ")) ,"</td></tr>");
         if (lexemes.length < 2 && stackTop.lexeme === this.AXIOM) {
             htmlTable.push("<tr><td>", ++iterations ,"</td><td style=\"text-align: right; color: green;\">",

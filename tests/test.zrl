@@ -1,7 +1,7 @@
 module test {
     var: a, b, c
     start
-        b = 5;
+        b = 3 + 2;
         a = ((2 + 8) / b) * 2 ^ (3 + (2*b - b*b));
         c = 2 + 3 * 10 / 6 + 3 * 2 + 4^4 - 1;
         output: a, b, c
