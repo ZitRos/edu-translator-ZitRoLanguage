@@ -7,6 +7,11 @@ A translator (in future - compiler) for fictional programming language - ZitRo l
 To translate program, run command this way: <code>node translate path/to/file.zrl</code>
 Also you can specify additional parameter to change syntax analyzer analyze method, run <code>node translate path/to/file.zrl -analyzeMethod 2</code>
 
+##### Follow this guide:
+1. Run translator with <code>node translate test.zrl -analyzeMethod 2</code> (for example);
+2. Make sure "program.zre" file created at <code>test</code> directory. If some errors occur, check the <code>test/translate.html</code> file contents.
+3. Run <code>node execute test/program</code> to execute program. Today only mathematical calculations with "output" are supported.
+
 ### Testing
 Run unit tests with <code>node runTests</code> command. 
 
@@ -29,5 +34,3 @@ module test {
     end
 }
 ```
-1. Run translator with <code>node translate test.zrl -analyzeMethod 2</code>;
-2. Check <code>test</code> directory and <code>test/translate.html</code> log.

@@ -308,7 +308,7 @@ LexicalAnalyzer.prototype.parse = function (code) {
                 table[i].classCode = parseInt(n);
             } else {
                 CONSTs[++consts] = {
-                    value: table[i].lexeme
+                    value: parseFloat(table[i].lexeme)
                 };
                 table[i].classCode = consts;
             }

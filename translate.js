@@ -1,5 +1,4 @@
-var colors = require("colors"),
-    temp,
+var temp,
     ds = __dirname.indexOf("/") === -1 ? "\\" : "/",
     args = process.argv.slice(2),
     flags = args.slice(1) || [],
@@ -10,7 +9,10 @@ var colors = require("colors"),
     error,
     lexicalAnalyzer = new (require("./modules/LexicalAnalyzer")),
     syntaxAnalyzer = new (require("./modules/SyntaxAnalyzer")),
+    compiler = new (require("./modules/Compiler")),
     translation;
+
+require("colors");
 
 console.log("\x1B[1m- ZitRoLang Translator v0.4 by ZitRo -\x1B[0m\n".blue);
 
@@ -92,5 +94,7 @@ if (error) {
     console.error(error);
     process.exit(2);
 }
+
+compiler.compile(outputName + "/program.zre", translation);
 
 console.log("Successfully completed.");
