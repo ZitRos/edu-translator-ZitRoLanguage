@@ -34,6 +34,7 @@ var PRIORITIES = [
                 IO_ARGUMENT_COUNTER = rpn.length;
             },
             onRPN: function (stack, rpn) {
+                console.log("On RPN");
                 rpn.splice(rpn.length - 1, 0, {
                     value: rpn.length - IO_ARGUMENT_COUNTER - 1,
                     textValue: rpn.length - IO_ARGUMENT_COUNTER - 1
@@ -114,9 +115,11 @@ Compiler.prototype.getRPN = function (translation) {
 
         if (!registered.doNotFreeStack) {
             if (registered.freeStackUntil) {
+                topStack = stack[stack.length - 1] || { priority: -2 };
                 while (stack.length && stack[stack.length - 1].value !== registered.freeStackUntil) {
                     rpn.push(stack.pop());
-                    if (typeof registered.onRPN === "function") registered.onRPN(stack, rpn);
+                    if (typeof REGISTERED[topStack.value].onRPN === "function") REGISTERED[topStack.value].onRPN(stack, rpn);
+                    topStack = stack[stack.length - 1] || { priority: -1 };
                 }
                 // just pop symbol itself and check for malformed algorithm
                 if (stack.length) { stack.pop(); }
@@ -125,7 +128,7 @@ Compiler.prototype.getRPN = function (translation) {
                 topStack = stack[stack.length - 1] || { priority: -2 };
                 while (stack.length && topStack.priority >= priority) {
                     rpn.push(stack.pop());
-                    if (typeof registered.onRPN === "function") registered.onRPN(stack, rpn);
+                    if (typeof REGISTERED[topStack.value].onRPN === "function") REGISTERED[topStack.value].onRPN(stack, rpn);
                     topStack = stack[stack.length - 1] || { priority: -1 };
                 }
             }

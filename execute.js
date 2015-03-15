@@ -4,7 +4,7 @@
 var fs = require("fs"),
     args = process.argv.slice(2),
     file = args[0],
-    content, rpn, IDs, CONSTs, i;
+    content, rpn, IDs, CONSTs, i, tempI;
 
 if (file.match(/.*\.zre$/) === null) file += ".zre";
 if (!fs.existsSync(file)) { console.error("File '%s' not found.", file); }
@@ -34,7 +34,8 @@ for (i = 0; i < rpn.length; i++) {
         console.log(rpn.slice(i - 1 - rpn[i - 1], i - 1).map(function (idName) {
             return IDs[idName];
         }).join(", "));
-        i -= 2 - rpn[i - 1];
+        tempI = 2 + rpn[i - 1];
         rpn.splice(i - 1 - rpn[i - 1], 2 + rpn[i - 1]);
+        i -= tempI;
     }
 }
