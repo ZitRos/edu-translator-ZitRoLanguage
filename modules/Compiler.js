@@ -12,21 +12,63 @@ var PRIORITIES = [
         ["*", "/"],
         ["^"]
     ],
+    // IF
+    // if ()       then    {rpn}   ;
+    //    ЛВ      m1 УПХ           m1:
+    //
     // doNotFreeStack:false - do not free stack
-    // miss:false - do not add symbol to stack
+    // miss:false - do not add symbol to stack. Miss does not block onStack trigger.
     // freeStackUntil:false - free stack until symbol reached (including symbol itself, without
     //                                                         writing to RPN)
     // ignore:false - ignore the symbol
     REGISTERED = {
+        "label": {},
         "=": {},
         "+": {},
         "-": {},
         "*": {},
         "/": {},
         "^": {},
-        ";": { miss: true },
+        "and": {},
+        "or": {},
+        "not": {},
+        ">": {},
+        ">=": {},
+        "<": {},
+        "<=": {},
+        "==": {},
+        "!=": {},
+        "if": { miss: true },
+        "then": {
+            onStack: function (stack, rpn) {
+
+                var labelIndex = LABEL_COUNTER++;
+
+                stack.splice(stack.length - 1, 1, {
+                    value: "label",
+                    labelIndex: labelIndex,
+                    textValue: "$:" + labelIndex
+                });
+                rpn.push({
+                    textValue: "$>" + labelIndex
+                }, {
+                    textValue: "$?JBF" // jump by false
+                });
+
+            }
+        },
+        ";": {
+            miss: true,
+            onStack: function (stack, rpn) {
+                while (stack.length && stack[stack.length - 1].textValue.substr(0, 2) === "$:") { // if-label
+                    rpn.push(stack.pop());
+                }
+            }
+        },
         "(": { doNotFreeStack: true },
         ")": { miss: true, freeStackUntil: "(" },
+        "[": { doNotFreeStack: true },
+        "]": { miss: true, freeStackUntil: "[" },
         ":": { ignore: true },
         ",": { ignore: true },
         "output": {
@@ -34,7 +76,6 @@ var PRIORITIES = [
                 IO_ARGUMENT_COUNTER = rpn.length;
             },
             onRPN: function (stack, rpn) {
-                console.log("On RPN");
                 rpn.splice(rpn.length - 1, 0, {
                     value: rpn.length - IO_ARGUMENT_COUNTER - 1,
                     textValue: rpn.length - IO_ARGUMENT_COUNTER - 1
@@ -49,7 +90,8 @@ var PRIORITIES = [
     TYPE_ID = 0,
     TYPE_CONST = 1;
 
-var IO_ARGUMENT_COUNTER = 0;
+var IO_ARGUMENT_COUNTER = 0,
+    LABEL_COUNTER = 0;
 
 /**
  * Compiles program to
@@ -139,8 +181,8 @@ Compiler.prototype.getRPN = function (translation) {
                 priority: priority,
                 textValue: lexeme
             });
-            if (typeof registered.onStack === "function") registered.onStack(stack, rpn);
         }
+        if (typeof registered.onStack === "function") registered.onStack(stack, rpn);
 
         console.log("Step %d: [%s] [%s]", i, stack.map(function (a) { return a.textValue || ""; }).join(" "), rpn.map(function (a) { return a.textValue || ""; }).join())
 

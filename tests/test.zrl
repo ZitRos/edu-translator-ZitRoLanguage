@@ -3,7 +3,10 @@ module test {
     start
         d = 3 + 2;
         b = 7 + (1 + 2 * 3);
-        output: d, b;
+        if d == 5 then
+            if [b == 14] and [d == 5] then
+                output: d;
+        output: b;
         a = ((2 + d) * b) * 2 ^ (1 + (b/7));
         c = 2 + 3 * 10 / 6 + d * 2 + 4^4 - 1;
         output: c, a
