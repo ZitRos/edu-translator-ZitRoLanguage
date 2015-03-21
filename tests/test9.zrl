@@ -4,8 +4,8 @@ module test {
         input: a;
         output: a;
         input: b;
-        do c=1 to b by a while c >= 10
-            do c=1 to b by a while c >= 10
+        for c=1 to b by a while c >= 10 do
+            for c=1 to b by a while c >= 10 do
                 input: c
             end
         end;

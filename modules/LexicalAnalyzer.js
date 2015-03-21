@@ -51,7 +51,8 @@ var LexicalAnalyzer = function () {
 //      CONST       35
         "{":        36,
         "}":        37,
-        ":":        38
+        ":":        38,
+        "for":      39
     };
 
     this.class = {

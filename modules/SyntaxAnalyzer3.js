@@ -53,8 +53,8 @@ var SyntaxAnalyzer3 = function () {
                 _.TRANSLATION.IDs[stack[0].classCode].value = parseFloat(processRPN(_.RPN)) || 0;
                 _.RPN = [];
             }),
-            ["do", "$ID", "=", "<expression1>", "to", "<expression1>", "by", "<expression1>",
-                "while", "<logicalExpression1>", "<operatorList1>", "end"],
+            ["for", "$ID", "=", "<expression1>", "to", "<expression1>", "by", "<expression1>",
+                "while", "<logicalExpression1>", "do", "<operatorList1>", "end"],
             ["if", "<logicalExpression1>", "then", "<operator>"]
         ],
         "<expression1>": [

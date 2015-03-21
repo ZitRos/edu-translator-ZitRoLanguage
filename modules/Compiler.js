@@ -184,7 +184,7 @@ Compiler.prototype.getRPN = function (translation) {
         }
         if (typeof registered.onStack === "function") registered.onStack(stack, rpn);
 
-        console.log("Step %d: [%s] [%s]", i, stack.map(function (a) { return a.textValue || ""; }).join(" "), rpn.map(function (a) { return a.textValue || ""; }).join())
+        //console.log("Step %d: [%s] [%s]", i, stack.map(function (a) { return a.textValue || ""; }).join(" "), rpn.map(function (a) { return a.textValue || ""; }).join())
 
     }
 

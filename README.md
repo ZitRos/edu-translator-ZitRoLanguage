@@ -25,8 +25,8 @@ module test {
         a = 2;
         c = 1;
         if [[a != (b + 10)] or not [b == 1] or [a <= 2]] or [not 1 >= 1] then
-        do c=1 to b by a while [c >= 10] or [a < 5]
-            do c=1 to b by a while c >= 10
+        for c=1 to b by a while [c >= 10] or [a < 5] do
+            for c=1 to b by a while c >= 10 do
                 output: c
             end
         end;

@@ -69,7 +69,7 @@ var SyntaxAnalyzer2 = function () {
                 return "2-2.1";
             } else if (lex.code === CODE_ID) {
                 return "2-4";
-            } else if (lex.lexeme === "do") {
+            } else if (lex.lexeme === "for") {
                 return "2-6";
             } else if (lex.lexeme === "if") {
                 //return "2-19";
@@ -148,7 +148,7 @@ var SyntaxAnalyzer2 = function () {
         "2-13": function (lex) {
             // return lex.lexeme === "while" ? "2-14" : error("Keyword \"while\" expected"); // v2
             if (lex.lexeme === "while") {
-                stack.push("2-18");
+                stack.push("2-17"); // stack.push("2-18");
                 return "4-2";
             } else {
                 return error("Keyword \"while\" expected");
@@ -180,6 +180,14 @@ var SyntaxAnalyzer2 = function () {
 //            stack.push("2-18");
 //            return nullSymb("2-1");
 //        },
+        "2-17": function (lex) {
+            if (lex.lexeme === "do") {
+                stack.push("2-18");
+                return "2-1";
+            } else {
+                return error("Keyword \"do\" expected");
+            }
+        },
         "2-18": function (lex) {
             if (lex.lexeme === "end") {
                 //return "2-18.1"; // v2

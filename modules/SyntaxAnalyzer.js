@@ -71,7 +71,7 @@ var SyntaxAnalyzer = function () {
         },
         "cycleOperator": function (chain) {
             chain
-                .match("do")
+                .match("for")
                 .match({ code: CODE_ID })
                 .match("=")
                 .rule("expression")
@@ -82,6 +82,7 @@ var SyntaxAnalyzer = function () {
                 .match("while")
                 //.match("(") // v3
                 .rule("logicalExpression")
+                .match("do")
                 //.match(")") // v3
                 .rule("operatorList")
                 //.match(";") // v3
