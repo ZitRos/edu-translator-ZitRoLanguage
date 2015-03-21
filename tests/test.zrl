@@ -1,14 +1,13 @@
 module test {
-    var: a, b, c, d
+    var: a, b, c
     start
-        d = 3 + 2;
-        b = 7 + (1 + 2 * 3);
-        if d == 5 then
-            if [b == 14] and [d == 5] then
-                output: d;
-        output: b;
-        a = ((2 + d) * b) * 2 ^ (1 + (b/7));
-        c = 2 + 3 * 10 / 6 + d * 2 + 4^4 - 1;
-        output: c, a
+        input: a;
+        output: a;
+        input: b;
+        do c=1 to b by a while c >= 10
+            do c=1 to b by a while c >= 10
+                output: c
+            end
+        end
     end
 }

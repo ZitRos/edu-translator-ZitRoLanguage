@@ -50,7 +50,7 @@ var PRIORITIES = [
                     textValue: "$:" + labelIndex
                 });
                 rpn.push({
-                    textValue: "$>" + labelIndex
+                    textValue: labelIndex
                 }, {
                     textValue: "$?JBF" // jump by false
                 });
@@ -160,7 +160,7 @@ Compiler.prototype.getRPN = function (translation) {
                 topStack = stack[stack.length - 1] || { priority: -2 };
                 while (stack.length && stack[stack.length - 1].value !== registered.freeStackUntil) {
                     rpn.push(stack.pop());
-                    if (typeof REGISTERED[topStack.value].onRPN === "function") REGISTERED[topStack.value].onRPN(stack, rpn);
+                    if (typeof (REGISTERED[topStack.value] || {}).onRPN === "function") REGISTERED[topStack.value].onRPN(stack, rpn);
                     topStack = stack[stack.length - 1] || { priority: -1 };
                 }
                 // just pop symbol itself and check for malformed algorithm
@@ -170,7 +170,7 @@ Compiler.prototype.getRPN = function (translation) {
                 topStack = stack[stack.length - 1] || { priority: -2 };
                 while (stack.length && topStack.priority >= priority) {
                     rpn.push(stack.pop());
-                    if (typeof REGISTERED[topStack.value].onRPN === "function") REGISTERED[topStack.value].onRPN(stack, rpn);
+                    if (typeof (REGISTERED[topStack.value] || {}).onRPN === "function") REGISTERED[topStack.value].onRPN(stack, rpn);
                     topStack = stack[stack.length - 1] || { priority: -1 };
                 }
             }
@@ -190,7 +190,7 @@ Compiler.prototype.getRPN = function (translation) {
 
     while (stack.length) {
         rpn.push(topStack = stack.pop());
-        registered = REGISTERED[topStack.value];
+        registered = REGISTERED[topStack.value] || {};
         if (typeof registered.onRPN === "function") registered.onRPN(stack, rpn);
     }
 
@@ -201,17 +201,32 @@ Compiler.prototype.getRPN = function (translation) {
 Compiler.prototype.compile = function (FILENAME, translation) {
 
     var rpn = this.getRPN(translation),
-        ids = translation.IDs, program, IDs = {};
+        ids = translation.IDs,
+        program, p, i,
+        IDs = {},
+        labels = {};
 
-    for (var i in ids) {
-        IDs[ids[i].name] = 0;
+    for (p in ids) {
+        IDs[ids[p].name] = 0;
+    }
+
+    // free labels
+    for (i = 0; i < rpn.length; i++) {
+        if (rpn[i].textValue.toString().substr(0, 2) === "$:") {
+            labels[rpn[i].textValue.toString().slice(2)] = i;
+            rpn.splice(i, 1);
+            i--;
+        }
     }
 
     program = {
         id: IDs,
         const: translation.CONSTs,
-        rpn: rpn.map(function (a) { return a.textValue || "?"; }),
-        rpnExt: rpn
+        labels: labels,
+        rpn: rpn.map(function (a) {
+            return typeof a.textValue === "undefined" ? "?" : a.textValue;
+        })
+        //rpnExt: rpn
     };
 
     fs.writeFileSync(FILENAME, JSON.stringify(program, null, 4));
