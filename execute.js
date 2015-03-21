@@ -3,13 +3,12 @@
  */
 
 var fs = require("fs"),
+    readLineSync = require("readline-sync"),
     args = process.argv.slice(2),
     file = args[0],
     content, rpn, IDs, CONSTs, i, cursor, label, n,
     stack = [],
     labels; // labels found before
-
-require("prompt-sync");
 
 if (file.match(/.*\.zre$/) === null) file += ".zre";
 if (!fs.existsSync(file)) { console.error("File '%s' not found.", file); }
@@ -22,6 +21,11 @@ rpn = content.rpn;
 labels = content.labels;
 IDs = content.id;
 CONSTs = content.const;
+
+// for cycle special variables
+IDs["_r1"] = 0;
+IDs["_r2"] = 0;
+IDs["_r3"] = 0;
 
 var val = function (value) {
     if (typeof value === "number" || typeof value === "boolean") return value;
@@ -45,13 +49,15 @@ var val = function (value) {
 
 for (cursor = 0; cursor < rpn.length; cursor++) {
     //console.log(
-    //    "{" + stack.join(" ") + "} | "
-    //    + rpn.map(function (val, i) { return (i === cursor) ? "\x1B[0;31m[" + val + "]\x1B[0m" : val; }).join(" ")
+    //    rpn.map(function (val, i) { return (i === cursor) ? "\x1B[0;31m" + val + "\x1B[0m" : val; }).join(" "),
+    //    "\x1b[1;34m{" + stack.join(" ") + "}\x1b[0m "
     //);
     if (rpn[cursor][0] === "$") {
         if (rpn[cursor][1] === "?") { // ?JBF - Jump by false
             var pos = labels[stack.pop()], condition = stack.pop();
             if (!condition) cursor = pos - 1;
+        } else if (rpn[cursor][1] === "J") {
+            cursor = labels[stack.pop()] - 1;
         }
     } else if (typeof rpn[cursor] === "number") stack.push(rpn[cursor]);
     else if (IDs.hasOwnProperty(rpn[cursor])) stack.push(rpn[cursor]);
@@ -97,50 +103,9 @@ for (cursor = 0; cursor < rpn.length; cursor++) {
         }).join(", "));
         stack.splice(n);
     } else if (rpn[cursor] === "input") {
-        console.log(stack.slice(n = -stack.pop()).map(function (idName) {
-            IDs[idName] = parseFloat(prompt()) || 0;
-        }).join(", "));
+        stack.slice(n = -stack.pop()).map(function (idName) {
+            IDs[idName] = parseFloat(readLineSync.question("> ")) || 0;
+        });
         stack.splice(n);
     }
 }
-
-//for (i = 0; i < rpn.length; i++) {
-//    if (rpn[i][0] === "$") {
-//        if (rpn[i][1] === ":") { // label definition
-//            label = rpn[i].toString().substring(2);
-//            setLabel(label, i);
-//        } else if (rpn[i][1] === "?") { // seek by false
-//            label = rpn[i - 1].toString().substring(2);
-//            if (rpn[i - 2] === false) {
-//                i = seek(label, i);
-//            }
-//        }
-//    }
-//    else if (rpn[i] === "+") { rpn.splice(i - 2, 3, val(i - 2) + val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "-") { rpn.splice(i - 2, 3, val(i - 2) - val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "*") { rpn.splice(i - 2, 3, val(i - 2) * val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "/") { rpn.splice(i - 2, 3, val(i - 2) / val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "^") { rpn.splice(i - 2, 3, Math.pow(val(i - 2), val(i - 1))); i -= 2; }
-//    else if (rpn[i] === ">") { rpn.splice(i - 2, 3, val(i - 2) > val(i - 1)); i -= 2; }
-//    else if (rpn[i] === ">=") { rpn.splice(i - 2, 3, val(i - 2) >= val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "<") { rpn.splice(i - 2, 3, val(i - 2) < val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "<=") { rpn.splice(i - 2, 3, val(i - 2) <= val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "==") { rpn.splice(i - 2, 3, val(i - 2) == val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "!=") { rpn.splice(i - 2, 3, val(i - 2) != val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "and") { rpn.splice(i - 2, 3, val(i - 2) && val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "or") { rpn.splice(i - 2, 3, val(i - 2) || val(i - 1)); i -= 2; }
-//    else if (rpn[i] === "not") { rpn.splice(i - 1, 2, !val(i - 1)); i -= 1; }
-//    else if (rpn[i] === "=") {
-//        IDs[rpn[i - 2]] = rpn[i - 1];
-//        rpn.splice(i - 2, 3);
-//        i -= 2;
-//    }
-//    else if (rpn[i] === "output") {
-//        console.log(rpn.slice(i - 1 - rpn[i - 1], i - 1).map(function (idName) {
-//            return IDs[idName];
-//        }).join(", "));
-//        tempI = 2 + rpn[i - 1];
-//        rpn.splice(i - 1 - rpn[i - 1], 2 + rpn[i - 1]);
-//        i -= tempI;
-//    }
-//}

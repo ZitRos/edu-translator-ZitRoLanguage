@@ -1,8 +1,8 @@
 var fs = require("fs");
 
 var PRIORITIES = [
-        ["(", "[", "if"],
-        [")", "]", "then"],
+        ["(", "[", "if", "for", "end"],
+        [")", "]", "then", "to", "by", "while", "do"],
         ["="],
         ["or"],
         ["and"],
@@ -23,6 +23,14 @@ var PRIORITIES = [
     // ignore:false - ignore the symbol
     REGISTERED = {
         "label": {},
+        "identifier": {
+            onRPN: function (stack, rpn) {
+                if (FLAG_1) {
+                    FLAG_1 = false;
+                    LABEL_STACK.push(rpn[rpn.length - 1]);
+                }
+            }
+        },
         "=": {},
         "+": {},
         "-": {},
@@ -52,7 +60,7 @@ var PRIORITIES = [
                 rpn.push({
                     textValue: labelIndex
                 }, {
-                    textValue: "$?JBF" // jump by false
+                    textValue: "$?" // jump by false
                 });
 
             }
@@ -81,6 +89,102 @@ var PRIORITIES = [
                     textValue: rpn.length - IO_ARGUMENT_COUNTER - 1
                 });
             }
+        },
+        "input": {
+            onStack: function (stack, rpn) {
+                IO_ARGUMENT_COUNTER = rpn.length;
+            },
+            onRPN: function (stack, rpn) {
+                rpn.splice(rpn.length - 1, 0, {
+                    value: rpn.length - IO_ARGUMENT_COUNTER - 1,
+                    textValue: rpn.length - IO_ARGUMENT_COUNTER - 1
+                });
+            }
+        },
+        "for": {
+            miss: true,
+            onStack: function () {
+                FLAG_1 = true;
+            }
+        },
+        "to": {
+            miss: true,
+            onStack: function (stack, rpn) {
+                var labelIndex = LABEL_COUNTER++;
+                LABEL_STACK.push({ textValue: labelIndex });
+                rpn.push(
+                    { textValue: "_r1" },
+                    { textValue: 1 },
+                    { textValue: "=" },
+                    { value: "label", labelIndex: labelIndex, textValue: "$:" + labelIndex },
+                    { textValue: "_r2" }
+                );
+            }
+        },
+        "by": {
+            miss: true,
+            onStack: function (stack, rpn) {
+                rpn.push(
+                    { textValue: "=" },
+                    { textValue: "_r3" }
+                );
+            }
+        },
+        "while": {
+            miss: true,
+            onStack: function (stack, rpn) {
+                var labelIndex = LABEL_COUNTER++;
+                LABEL_STACK.push({ textValue: labelIndex });
+                rpn.push(
+                    { textValue: "=" },
+                    { textValue: "_r1" },
+                    { textValue: 0 },
+                    { textValue: "==" },
+                    { textValue: labelIndex },
+                    { textValue: "$?" },
+                    { textValue: LABEL_STACK[LABEL_STACK.length - 3].textValue }, // id
+                    { textValue: LABEL_STACK[LABEL_STACK.length - 3].textValue },
+                    { textValue: "_r3" },
+                    { textValue: "+" },
+                    { textValue: "=" },
+                    { value: "label", labelIndex: labelIndex, textValue: "$:" + labelIndex }
+                );
+            }
+        },
+        "do": {
+            miss: true,
+            onStack: function (stack, rpn) {
+                var labelIndex = LABEL_COUNTER++;
+                LABEL_STACK.push({ textValue: labelIndex });
+                rpn.push(
+                    { textValue: labelIndex },
+                    { textValue: "$?" },
+                    { textValue: "_r1" },
+                    { textValue: 0 },
+                    { textValue: "=" },
+                    { textValue: LABEL_STACK[LABEL_STACK.length - 4].textValue }, // id
+                    { textValue: "_r2" },
+                    { textValue: "-" },
+                    { textValue: "_r3" },
+                    { textValue: "*" },
+                    { textValue: 0 },
+                    { textValue: "<=" },
+                    { textValue: labelIndex },
+                    { textValue: "$?" }
+                );
+            }
+        },
+        "end": {
+            miss: true,
+            onStack: function (stack, rpn) {
+                var labelIndex = LABEL_STACK[LABEL_STACK.length - 1].textValue;
+                rpn.push(
+                    { textValue: LABEL_STACK[LABEL_STACK.length - 3].textValue }, // m1
+                    { textValue: "$J" },
+                    { value: "label", labelIndex: labelIndex, textValue: "$:" + labelIndex } // m3
+                );
+                LABEL_STACK.splice(LABEL_STACK.length - 4, 4);
+            }
         }
     },
     START_LEXEME = "start",
@@ -91,7 +195,9 @@ var PRIORITIES = [
     TYPE_CONST = 1;
 
 var IO_ARGUMENT_COUNTER = 0,
-    LABEL_COUNTER = 0;
+    LABEL_COUNTER = 0,
+    LABEL_STACK = [],
+    FLAG_1 = false; // for cycle remember variable
 
 /**
  * Compiles program to
@@ -150,6 +256,9 @@ Compiler.prototype.getRPN = function (translation) {
                 value: lexemeArray[i].classCode,
                 textValue: code === ID_LEXEME_CODE ? lexeme : parseFloat(lexeme)
             });
+            if (code === ID_LEXEME_CODE && REGISTERED["identifier"].onRPN) {
+                REGISTERED["identifier"].onRPN(stack, rpn);
+            }
             continue;
         }
 
@@ -184,7 +293,7 @@ Compiler.prototype.getRPN = function (translation) {
         }
         if (typeof registered.onStack === "function") registered.onStack(stack, rpn);
 
-        //console.log("Step %d: [%s] [%s]", i, stack.map(function (a) { return a.textValue || ""; }).join(" "), rpn.map(function (a) { return a.textValue || ""; }).join())
+        console.log("Step %d: \x1b[0;31m[%s]\x1b[0m [%s] \x1b[0;34m[%s]\x1b[0m", i, stack.map(function (a) { return a.textValue; }).join(" "), rpn.map(function (a) { return a.textValue; }).join(), lexemeArray.slice(i).map(function (e) { return e.lexeme; }).join(" "))
 
     }
 
@@ -229,7 +338,7 @@ Compiler.prototype.compile = function (FILENAME, translation) {
         //rpnExt: rpn
     };
 
-    fs.writeFileSync(FILENAME, JSON.stringify(program, null, 4));
+    fs.writeFileSync(FILENAME, JSON.stringify(program));
 
 };
 

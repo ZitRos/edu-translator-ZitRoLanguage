@@ -1,13 +1,14 @@
 module test {
-    var: a, b, c
+    var: a, b, c, d
     start
-        input: a;
-        output: a;
-        input: b;
-        for c=1 to b by a while c >= 10 do
-            for c=1 to b by a while c >= 10 do
-                output: c
+        b = 3;
+        a = 2;
+        if [[a != (b + 10)] or not [b == 1] or [a <= 2]] or [not 1 >= 1] then
+        for c=1 to b by a while [c >= 10] or [a < 5] do
+            for d=1 to b by a while d <= 10 do
+                output: c, d
             end
-        end
+        end;
+        output: a
     end
 }
