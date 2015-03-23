@@ -33,20 +33,6 @@ var val = function (value) {
     else console.error("Value " + value + " was not registered.");
 };
 
-//var seek = function (l, i) {
-//    var d = labels.hasOwnProperty(l) ? -1 : 1,
-//        label = "$:" + l;
-//    while (typeof rpn[i] !== "undefined" && rpn[i] !== label) i += d;
-//    if (rpn[i]) {
-//        return i;
-//    } else {
-//        console.error("Fatal error: undefined label " + label);
-//        process.exit(1000);
-//        return 0;
-//    }
-//};
-//var setLabel = function (l, i) { labels[l] = i; };
-
 for (cursor = 0; cursor < rpn.length; cursor++) {
     //console.log(
     //    rpn.map(function (val, i) { return (i === cursor) ? "\x1B[0;31m" + val + "\x1B[0m" : val; }).join(" "),
@@ -99,7 +85,7 @@ for (cursor = 0; cursor < rpn.length; cursor++) {
         stack.splice(stack.length - 2, 2);
     } else if (rpn[cursor] === "output") {
         console.log(stack.slice(n = -stack.pop()).map(function (idName) {
-            return IDs[idName];
+            return idName + "=" + IDs[idName];
         }).join(", "));
         stack.splice(n);
     } else if (rpn[cursor] === "input") {

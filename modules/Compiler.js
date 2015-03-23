@@ -27,7 +27,7 @@ var PRIORITIES = [
             onRPN: function (stack, rpn) {
                 if (FLAG_1) {
                     FLAG_1 = false;
-                    LABEL_STACK.push(rpn[rpn.length - 1]);
+                    NESTING_STACK.push(rpn[rpn.length - 1]);
                 }
             }
         },
@@ -46,7 +46,13 @@ var PRIORITIES = [
         "<=": {},
         "==": {},
         "!=": {},
-        "if": { miss: true },
+        "if": {
+            miss: true,
+            onStack: function () {
+                if ((NESTING_STACK[NESTING_STACK.length - 1] || {}).textValue !== "if")
+                    NESTING_STACK.push({ textValue: "if" });
+            }
+        },
         "then": {
             onStack: function (stack, rpn) {
 
@@ -68,8 +74,11 @@ var PRIORITIES = [
         ";": {
             miss: true,
             onStack: function (stack, rpn) {
-                while (stack.length && stack[stack.length - 1].textValue.substr(0, 2) === "$:") { // if-label
-                    rpn.push(stack.pop());
+                if ((NESTING_STACK[NESTING_STACK.length - 1] || {}).textValue === "if") {
+                    while (stack.length && stack[stack.length - 1].textValue.substr(0, 2) === "$:") { // if-label
+                        rpn.push(stack.pop());
+                    }
+                    NESTING_STACK.pop();
                 }
             }
         },
@@ -111,7 +120,7 @@ var PRIORITIES = [
             miss: true,
             onStack: function (stack, rpn) {
                 var labelIndex = LABEL_COUNTER++;
-                LABEL_STACK.push({ textValue: labelIndex });
+                NESTING_STACK.push({ textValue: labelIndex });
                 rpn.push(
                     { textValue: "_r1" },
                     { textValue: 1 },
@@ -134,7 +143,7 @@ var PRIORITIES = [
             miss: true,
             onStack: function (stack, rpn) {
                 var labelIndex = LABEL_COUNTER++;
-                LABEL_STACK.push({ textValue: labelIndex });
+                NESTING_STACK.push({ textValue: labelIndex });
                 rpn.push(
                     { textValue: "=" },
                     { textValue: "_r1" },
@@ -142,8 +151,8 @@ var PRIORITIES = [
                     { textValue: "==" },
                     { textValue: labelIndex },
                     { textValue: "$?" },
-                    { textValue: LABEL_STACK[LABEL_STACK.length - 3].textValue }, // id
-                    { textValue: LABEL_STACK[LABEL_STACK.length - 3].textValue },
+                    { textValue: NESTING_STACK[NESTING_STACK.length - 3].textValue }, // id
+                    { textValue: NESTING_STACK[NESTING_STACK.length - 3].textValue },
                     { textValue: "_r3" },
                     { textValue: "+" },
                     { textValue: "=" },
@@ -155,14 +164,14 @@ var PRIORITIES = [
             miss: true,
             onStack: function (stack, rpn) {
                 var labelIndex = LABEL_COUNTER++;
-                LABEL_STACK.push({ textValue: labelIndex });
+                NESTING_STACK.push({ textValue: labelIndex });
                 rpn.push(
                     { textValue: labelIndex },
                     { textValue: "$?" },
                     { textValue: "_r1" },
                     { textValue: 0 },
                     { textValue: "=" },
-                    { textValue: LABEL_STACK[LABEL_STACK.length - 4].textValue }, // id
+                    { textValue: NESTING_STACK[NESTING_STACK.length - 4].textValue }, // id
                     { textValue: "_r2" },
                     { textValue: "-" },
                     { textValue: "_r3" },
@@ -177,13 +186,17 @@ var PRIORITIES = [
         "end": {
             miss: true,
             onStack: function (stack, rpn) {
-                var labelIndex = LABEL_STACK[LABEL_STACK.length - 1].textValue;
+
+                REGISTERED[";"].onStack(stack, rpn);
+
+                var labelIndex = NESTING_STACK[NESTING_STACK.length - 1].textValue;
                 rpn.push(
-                    { textValue: LABEL_STACK[LABEL_STACK.length - 3].textValue }, // m1
+                    { textValue: NESTING_STACK[NESTING_STACK.length - 3].textValue }, // m1
                     { textValue: "$J" },
                     { value: "label", labelIndex: labelIndex, textValue: "$:" + labelIndex } // m3
                 );
-                LABEL_STACK.splice(LABEL_STACK.length - 4, 4);
+                NESTING_STACK.splice(NESTING_STACK.length - 4, 4);
+
             }
         }
     },
@@ -196,7 +209,7 @@ var PRIORITIES = [
 
 var IO_ARGUMENT_COUNTER = 0,
     LABEL_COUNTER = 0,
-    LABEL_STACK = [],
+    NESTING_STACK = [],
     FLAG_1 = false; // for cycle remember variable
 
 /**
@@ -302,6 +315,8 @@ Compiler.prototype.getRPN = function (translation) {
         registered = REGISTERED[topStack.value] || {};
         if (typeof registered.onRPN === "function") registered.onRPN(stack, rpn);
     }
+
+    console.log("Step %d: \x1b[0;31m[%s]\x1b[0m [%s] \x1b[0;34m[%s]\x1b[0m", i, stack.map(function (a) { return a.textValue; }).join(" "), rpn.map(function (a) { return a.textValue; }).join(), lexemeArray.slice(i).map(function (e) { return e.lexeme; }).join(" "));
 
     return rpn;
 
